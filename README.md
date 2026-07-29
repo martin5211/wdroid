@@ -1,5 +1,7 @@
 # wdroid
 
+![wdroid creenshot](screenshot.png)
+
 wdroid puts Waydroid (Android running in a container) inside a normal desktop
 window instead of letting it take over the whole screen. It works under WSLg
 on Windows as well as on a regular Wayland desktop or a nested Weston.
