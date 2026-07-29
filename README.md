@@ -30,21 +30,26 @@ window closes.
 
 ## Project structure
 
-Everything lives in a single Rust crate. In src/, main.rs wires up the event
-loop, signal handling and the session heartbeat timer. cli.rs defines the
-command line flags. state.rs holds the compositor state, the Wayland socket
-and the view transform used for scaling. handlers/ implements the Wayland
-protocols: compositor.rs for surfaces and shared-memory buffers, xdg_shell.rs
-for window management, including the fixed-geometry policy that keeps the
-Android side stable, and mod.rs for seat, output and clipboard plumbing.
-winit_loop.rs owns the host window and the render pass, input.rs translates
-host input events into Wayland ones, focus.rs routes pointer focus between
-the Android surface and the overlay, ui.rs is the small egui overlay that
-shows session status, and session.rs is the Waydroid session state machine.
+Everything lives in a single Rust crate, in src/: 
 
-Outside src/, scripts/ holds the installers and a copy of the waydroid-up
-launcher, packaging/ has the desktop entry, flatpak/ the Flatpak manifest and
-its helper scripts, and .github/workflows/ the Debian packaging action.
+- main.rs wires up the event loop, signal handling and the session heartbeat timer.
+- cli.rs defines the command line flags.
+- state.rs holds the compositor state, the Wayland socket and the view transform used for scaling. 
+- handlers/ implements the Wayland protocols: 
+    - compositor.rs for surfaces and shared-memory buffers,
+    - xdg_shell.rs for window management, including the fixed-geometry policy that keeps the Android side stable,
+    - mod.rs for seat, output and clipboard plumbing.
+- winit_loop.rs owns the host window and the render pass.
+- input.rs translates host input events into Wayland ones.
+- focus.rs routes pointer focus between the Android surface and the overlay.
+- ui.rs is the small egui overlay that shows session status.
+- session.rs is the Waydroid session state machine.
+
+Outside src/:
+- scripts/ holds the installers and a copy of the waydroid-up
+launcher.
+- packaging/ has the desktop entry.
+- flatpak/ the Flatpak manifest and its helper scripts.
 
 ## Requirements
 
