@@ -1,0 +1,8 @@
+#!/bin/sh
+# Forwards `waydroid …` calls from inside the sandbox to the host, keeping
+# WAYLAND_DISPLAY (wdroid sets it on the session-start call so the host
+# session connects to wdroid's socket instead of the desktop compositor).
+if [ -n "$WAYLAND_DISPLAY" ]; then
+    exec flatpak-spawn --host --env=WAYLAND_DISPLAY="$WAYLAND_DISPLAY" waydroid "$@"
+fi
+exec flatpak-spawn --host waydroid "$@"

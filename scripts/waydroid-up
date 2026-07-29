@@ -1,0 +1,23 @@
+#!/bin/sh
+# Daily Waydroid launcher: Windows toast notifications + session.
+# Run from an interactive terminal and keep it open (Windows interop lives here).
+
+started_daemon=0
+if pgrep -f wsl-toast-daemon >/dev/null; then
+    echo "toast daemon: already running"
+else
+    "$HOME/.local/bin/wsl-toast-daemon" &
+    started_daemon=1
+    echo "toast daemon: started"
+fi
+
+if waydroid status 2>/dev/null | grep -q "Session:[[:space:]]*RUNNING"; then
+    echo "waydroid session: already running"
+    if [ "$started_daemon" = 1 ]; then
+        echo "note: session predates the daemon — no notifications until you restart it:"
+        echo "      waydroid session stop && waydroid-up"
+    fi
+else
+    nohup waydroid session start >/tmp/waydroid-session.log 2>&1 &
+    echo "waydroid session: starting in background (log: /tmp/waydroid-session.log)"
+fi

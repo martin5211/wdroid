@@ -1,0 +1,6 @@
+#!/bin/sh
+# Flatpak entry point. The socket lives in a subdirectory that is bind-mounted
+# from the host ($XDG_RUNTIME_DIR/wdroid), so the host-side Waydroid session
+# can reach it. WAYLAND_DISPLAY accepts the relative sub-path.
+mkdir -p "$XDG_RUNTIME_DIR/wdroid"
+exec /app/bin/wdroid --socket wdroid/wayland-wdroid "$@"

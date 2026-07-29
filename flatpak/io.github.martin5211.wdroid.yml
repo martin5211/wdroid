@@ -1,0 +1,58 @@
+# Flatpak manifest for wdroid.
+#
+# wdroid is unusual for a flatpak: it must (a) talk to the HOST's waydroid
+# CLI (the container runs on the host, not in the sandbox) and (b) expose
+# the Wayland socket it creates to the host, so the Waydroid session can
+# connect to it. This works through two holes:
+#
+#   * --talk-name=org.freedesktop.Flatpak lets the bundled `waydroid` shim
+#     forward every CLI call to the host via flatpak-spawn --host.
+#   * --filesystem=xdg-run/wdroid:create binds a host directory into the
+#     sandbox at $XDG_RUNTIME_DIR/wdroid; the compositor socket is created
+#     there, so the host-side session finds it at
+#     /run/user/<uid>/wdroid/wayland-wdroid.
+#
+# Build:   flatpak-builder --user --install --force-clean build-dir \
+#              flatpak/io.github.martin5211.wdroid.yml
+# Run:     flatpak run io.github.martin5211.wdroid
+#
+# Note: this manifest builds with network access (cargo fetches crates).
+# For Flathub submission you would generate cargo-sources.json with
+# flatpak-cargo-generator and build offline instead.
+
+app-id: io.github.martin5211.wdroid
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: wdroid-wrapper
+
+finish-args:
+  - --socket=wayland
+  - --share=ipc
+  - --device=dri
+  - --filesystem=xdg-run/wdroid:create
+  - --talk-name=org.freedesktop.Flatpak
+
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+  build-args:
+    - --share=network
+
+modules:
+  - name: wdroid
+    buildsystem: simple
+    build-commands:
+      - cargo build --release
+      - install -Dm755 target/release/wdroid /app/bin/wdroid
+      - install -Dm755 flatpak/wdroid-wrapper /app/bin/wdroid-wrapper
+      - install -Dm755 flatpak/waydroid-shim /app/bin/waydroid
+      - install -Dm644 packaging/wdroid.desktop
+        /app/share/applications/io.github.martin5211.wdroid.desktop
+      - sed -i 's|Exec=/usr/bin/wdroid|Exec=wdroid-wrapper|;
+        s|Icon=waydroid|Icon=io.github.martin5211.wdroid|'
+        /app/share/applications/io.github.martin5211.wdroid.desktop
+    sources:
+      - type: dir
+        path: ..

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=wdroid
+Comment=Waydroid in a window
+Exec=/usr/bin/wdroid
+Icon=waydroid
+Terminal=false
+Categories=System;Emulator;
