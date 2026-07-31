@@ -10,8 +10,9 @@ use smithay::wayland::output::OutputHandler;
 use smithay::wayland::selection::data_device::{
     set_data_device_focus, ClientDndGrabHandler, DataDeviceHandler, DataDeviceState, ServerDndGrabHandler,
 };
+use smithay::wayland::selection::wlr_data_control::{DataControlHandler, DataControlState};
 use smithay::wayland::selection::SelectionHandler;
-use smithay::{delegate_data_device, delegate_output, delegate_seat};
+use smithay::{delegate_data_control, delegate_data_device, delegate_output, delegate_seat};
 
 impl SeatHandler for Wdroid {
     type KeyboardFocus = WlSurface;
@@ -49,6 +50,14 @@ impl ClientDndGrabHandler for Wdroid {}
 impl ServerDndGrabHandler for Wdroid {}
 
 delegate_data_device!(Wdroid);
+
+impl DataControlHandler for Wdroid {
+    fn data_control_state(&self) -> &DataControlState {
+        &self.data_control_state
+    }
+}
+
+delegate_data_control!(Wdroid);
 
 impl OutputHandler for Wdroid {}
 delegate_output!(Wdroid);

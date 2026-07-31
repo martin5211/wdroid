@@ -15,7 +15,8 @@ if [ ! -x target/release/wdroid ]; then
 fi
 
 echo "Installing runtime dependencies…"
-sudo apt-get install -y libegl1 libxkbcommon0 libgles2
+# wl-clipboard powers the clipboard bridge and waydroid's own pyclip sync
+sudo apt-get install -y libegl1 libxkbcommon0 libgles2 wl-clipboard
 
 echo "Installing binary to ~/.local/bin/wdroid…"
 install -D target/release/wdroid "$HOME/.local/bin/wdroid"
@@ -26,6 +27,14 @@ if [ ! -e "$HOME/.local/bin/waydroid-up" ]; then
     install -D scripts/waydroid-up "$HOME/.local/bin/waydroid-up"
 else
     echo "Keeping existing ~/.local/bin/waydroid-up"
+fi
+
+# Clipboard bridge (Windows <-> WSLg <-> wdroid); same never-clobber policy.
+if [ ! -e "$HOME/.local/bin/weston-clip-bridge" ]; then
+    echo "Installing weston-clip-bridge…"
+    install -D scripts/weston-clip-bridge "$HOME/.local/bin/weston-clip-bridge"
+else
+    echo "Keeping existing ~/.local/bin/weston-clip-bridge"
 fi
 
 echo "Installing desktop entry…"

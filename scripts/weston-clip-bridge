@@ -1,0 +1,59 @@
+#!/bin/sh
+# Three-way clipboard sync: Windows <-> WSLg (wayland-0) <-> nested compositor
+# (wdroid's wayland-wdroid if its socket exists, else Weston's wayland-1).
+# Windows is polled via powershell.exe (every 2s, it's slow to spawn); wayland sides every 1s.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+if [ -S "$XDG_RUNTIME_DIR/wayland-wdroid" ]; then
+    NESTED=wayland-wdroid
+else
+    NESTED=wayland-1
+fi
+
+# Single instance only — concurrent bridges corrupt each other's transfers
+exec 9>"$XDG_RUNTIME_DIR/weston-clip-bridge.lock"
+flock -n 9 || exit 0
+
+PS=/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe
+CLIP=/mnt/c/Windows/System32/clip.exe
+
+read_win() { "$PS" -NoProfile -NonInteractive -Command "Get-Clipboard -Raw" 2>/dev/null | tr -d "\r"; }
+read_w0()  { WAYLAND_DISPLAY=wayland-0 wl-paste -n 2>/dev/null; }
+read_w1()  { WAYLAND_DISPLAY=$NESTED wl-paste -n 2>/dev/null; }
+
+# Baseline per source, no propagation at startup — a change is only
+# a value that differs from what THAT source held last time we looked.
+last_w=$(read_win)
+last_a=$(read_w0)
+last_b=$(read_w1)
+
+tick=0
+while sleep 1; do
+    tick=$((tick + 1))
+    a=$(read_w0)
+    b=$(read_w1)
+    w=$last_w
+    [ $((tick % 2)) -eq 0 ] && w=$(read_win)
+
+    new=""
+    if [ -n "$w" ] && [ "$w" != "$last_w" ]; then
+        new=$w
+    elif [ -n "$a" ] && [ "$a" != "$last_a" ]; then
+        new=$a
+    elif [ -n "$b" ] && [ "$b" != "$last_b" ]; then
+        new=$b
+    fi
+
+    if [ -n "$new" ]; then
+        [ "$new" != "$a" ] && printf %s "$new" | WAYLAND_DISPLAY=wayland-0 wl-copy 2>/dev/null
+        [ "$new" != "$b" ] && printf %s "$new" | WAYLAND_DISPLAY=$NESTED wl-copy 2>/dev/null
+        [ "$new" != "$w" ] && printf %s "$new" | "$CLIP" 2>/dev/null
+        last_w=$new
+        last_a=$new
+        last_b=$new
+    else
+        last_w=$w
+        last_a=$a
+        last_b=$b
+    fi
+done

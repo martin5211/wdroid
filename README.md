@@ -46,8 +46,8 @@ Everything lives in a single Rust crate, in src/:
 - session.rs is the Waydroid session state machine.
 
 Outside src/:
-- scripts/ holds the installers and a copy of the waydroid-up
-launcher.
+- scripts/ holds the installers, a copy of the waydroid-up launcher and the
+weston-clip-bridge clipboard sync script.
 - packaging/ has the desktop entry.
 - flatpak/ the Flatpak manifest and its helper scripts.
 
@@ -71,8 +71,9 @@ The binary ends up in target/release/wdroid.
 ## Installing
 
 Run scripts/install.sh from the repository root after building. It installs
-the runtime libraries, copies the binary to ~/.local/bin/wdroid, installs the
-waydroid-up launcher only if you do not already have one, creates a desktop
+the runtime libraries (including wl-clipboard for the clipboard path), copies
+the binary to ~/.local/bin/wdroid, installs the waydroid-up launcher and the
+weston-clip-bridge script only if you do not already have them, creates a desktop
 entry (which WSLg republishes as a Windows Start Menu entry), and under WSL
 calls scripts/install-windows-shortcut.sh to put a wdroid shortcut on the
 Windows desktop. That shortcut launches through wslg.exe, so no terminal
@@ -90,6 +91,25 @@ points at a custom session launcher script, and --xkb-layout/--xkb-variant
 override the keyboard layout. Closing the window, Ctrl+C or SIGTERM all stop
 the Waydroid session before exiting.
 
+## Clipboard
+
+Copy and paste work across Android, the Linux host and (under WSL) Windows.
+Two pieces make this happen:
+
+- The compositor implements the wlr-data-control protocol, so wl-copy and
+  wl-paste can read and set the selection on wdroid's socket without needing
+  keyboard focus. Waydroid's own session-side clipboard manager (pyclip,
+  which shells out to wl-clipboard) uses exactly this to sync the Android
+  clipboard with the compositor selection.
+- scripts/weston-clip-bridge is a small polling loop that keeps three
+  clipboards equal: the Windows clipboard (via powershell.exe), the host
+  compositor (wayland-0 under WSLg) and the nested one — it targets
+  wdroid's socket when present and falls back to a nested Weston's
+  wayland-1, which is where its name comes from. waydroid-up starts it;
+  a flock makes repeated starts a no-op. On a plain Linux desktop without
+  Windows the bridge still syncs host and Android sides; expect a second
+  or two of latency either way, and text only.
+
 ## Debian package
 
 The GitHub Action in .github/workflows/build-deb.yml builds a .deb with
@@ -100,8 +120,9 @@ release; it can also be run manually from the Actions tab. To build locally:
     cargo deb
 
 The package installs to /usr/bin/wdroid with a desktop entry, declares the
-runtime library dependencies, recommends waydroid, and ships waydroid-up as
-an example under /usr/share/wdroid/examples.
+runtime library dependencies, recommends waydroid and wl-clipboard, and ships
+waydroid-up and weston-clip-bridge as examples under
+/usr/share/wdroid/examples.
 
 ## Flatpak
 
@@ -123,8 +144,8 @@ adjust details the first time.
 
 ## Known limitations
 
-Clipboard is not yet bridged between Android and the host. The cursor theme
-inside Android is the host cursor. Touch input is not forwarded (the pointer
+Clipboard sync is text-only and polled (see the Clipboard section). The
+cursor theme inside Android is the host cursor. Touch input is not forwarded (the pointer
 covers the Android TV UI fine). Rendering is a continuous redraw loop rather
 than damage-tracked, which costs some idle CPU. Under WSLg the maximize
 button cannot be greyed out — WSLg ignores the Wayland non-resizable hints —

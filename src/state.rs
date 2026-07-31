@@ -15,7 +15,7 @@ use smithay::{
     wayland::{
         compositor::{CompositorClientState, CompositorState},
         output::OutputManagerState,
-        selection::data_device::DataDeviceState,
+        selection::{data_device::DataDeviceState, wlr_data_control::DataControlState},
         shell::xdg::XdgShellState,
         shm::ShmState,
         socket::ListeningSocketSource,
@@ -45,6 +45,7 @@ pub struct Wdroid {
     pub output_manager_state: OutputManagerState,
     pub seat_state: SeatState<Wdroid>,
     pub data_device_state: DataDeviceState,
+    pub data_control_state: DataControlState,
     pub popups: PopupManager,
 
     pub seat: Seat<Self>,
@@ -65,6 +66,10 @@ impl Wdroid {
         let output_manager_state = OutputManagerState::new_with_xdg_output::<Self>(&dh);
         let mut seat_state = SeatState::new();
         let data_device_state = DataDeviceState::new::<Self>(&dh);
+        // Lets wl-copy/wl-paste (the clip bridge, waydroid's pyclip sync) reach
+        // the selection without focus — without this they fall back to mapping
+        // a toplevel, which fights the fixed-geometry contract.
+        let data_control_state = DataControlState::new::<Self, _>(&dh, None, |_| true);
         let popups = PopupManager::default();
 
         let mut seat: Seat<Self> = seat_state.new_wl_seat(&dh, "wdroid");
@@ -106,6 +111,7 @@ impl Wdroid {
             output_manager_state,
             seat_state,
             data_device_state,
+            data_control_state,
             popups,
             seat,
             session,

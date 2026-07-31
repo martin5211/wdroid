@@ -11,6 +11,10 @@ else
     echo "toast daemon: started"
 fi
 
+# flock inside the bridge makes this a no-op if one is already running
+nohup "$HOME/.local/bin/weston-clip-bridge" >/dev/null 2>&1 &
+echo "clip bridge: ensured"
+
 if waydroid status 2>/dev/null | grep -q "Session:[[:space:]]*RUNNING"; then
     echo "waydroid session: already running"
     if [ "$started_daemon" = 1 ]; then

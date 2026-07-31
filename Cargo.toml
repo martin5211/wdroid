@@ -17,11 +17,12 @@ section = "utils"
 priority = "optional"
 # libEGL is dlopened at runtime, so cargo-deb's $auto scan cannot see it.
 depends = "$auto, libegl1, libgles2"
-recommends = "waydroid"
+recommends = "waydroid, wl-clipboard"
 assets = [
     ["target/release/wdroid", "usr/bin/", "755"],
     ["packaging/wdroid.desktop", "usr/share/applications/", "644"],
     ["scripts/waydroid-up", "usr/share/wdroid/examples/waydroid-up", "755"],
+    ["scripts/weston-clip-bridge", "usr/share/wdroid/examples/weston-clip-bridge", "755"],
     ["README.md", "usr/share/doc/wdroid/README.md", "644"],
 ]
 
