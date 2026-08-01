@@ -2,7 +2,7 @@
 Type=Application
 Name=wdroid
 Comment=Waydroid in a window
-Exec=/usr/bin/wdroid
+Exec=sh -lc '/usr/bin/wdroid >/tmp/wdroid.log 2>&1'
 Icon=waydroid
 Terminal=false
 Categories=System;Emulator;

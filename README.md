@@ -91,6 +91,13 @@ points at a custom session launcher script, and --xkb-layout/--xkb-variant
 override the keyboard layout. Closing the window, Ctrl+C or SIGTERM all stop
 the Waydroid session before exiting.
 
+The desktop entry and the Windows shortcut both launch wdroid through
+`sh -lc`, a login shell, so ~/.profile runs first. Environment that affects
+rendering — for example Mesa's GPU selection under WSL (GALLIUM_DRIVER,
+MESA_D3D12_DEFAULT_ADAPTER_NAME) — must be exported from ~/.profile;
+~/.bashrc is only read by interactive bash and never reaches these
+launchers, leaving wdroid on software rendering.
+
 ## Clipboard
 
 Copy and paste work across Android, the Linux host and (under WSL) Windows.

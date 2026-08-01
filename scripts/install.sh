@@ -39,9 +39,10 @@ fi
 
 echo "Installing desktop entry…"
 mkdir -p "$HOME/.local/share/applications"
-# Absolute Exec path: desktop launchers don't run login shells, so
-# ~/.local/bin may not be in their PATH.
-sed "s|Exec=/usr/bin/|Exec=$HOME/.local/bin/|" packaging/wdroid.desktop \
+# Exec goes through `sh -lc` (see packaging/wdroid.desktop) so ~/.profile
+# runs first — GPU env like GALLIUM_DRIVER lives there. $HOME stays literal;
+# the login shell expands it at launch.
+sed "s|/usr/bin/wdroid|\$HOME/.local/bin/wdroid|" packaging/wdroid.desktop \
     > "$HOME/.local/share/applications/wdroid.desktop"
 
 if grep -qi microsoft /proc/version 2>/dev/null; then
